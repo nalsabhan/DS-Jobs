@@ -17,19 +17,23 @@ def init_db(db_name, db_col):
 
     return coll
 
+# extract the city name from the salary brief description
 def get_city(string_arg):
 
     city = string_arg.split('(')[0].split(',')[0]
     return city.strip()
 
+# extract the state name from the salary brief description
 def get_state(string_arg):
 
     state = string_arg.split('(')[0].split(',')[1]
     return state.strip()
 
+# extract the date from the salary brief description
 def get_date(string_arg):
     return string_arg[string_arg.index("(") + 1:string_arg.rindex(")")]
 
+# to split the data such that the same job title isn't in both the training and test 
 def fair_split(df, p):
     
     
@@ -55,6 +59,7 @@ def fair_split(df, p):
     
     return X_train, X_test, y_train, y_test
 
+# To split the data and vectorize the text in 'desc' to a tfidf BOW matrix 
 def split_and_vectorize(df, grams, max_feat):
     docs_train, docs_test, y_train, y_test = train_test_split(df['desc'], df['sal'], test_size = 0.1)
 
@@ -66,13 +71,15 @@ def split_and_vectorize(df, grams, max_feat):
     
     X_train = vect_model.fit_transform(docs_train)
     X_test = vect_model.transform(docs_test)
-    
-#     X_train = vect_model.fit_transform(docs_train.desc)
-#     X_test = vect_model.transform(docs_test.desc)
+
+
     
     feature_words = vect_model.get_feature_names()
     return X_train, X_test, y_train, y_test, vect_model, feature_words
 
+''' Returns the H and W from the NMF factorization of the training data, 
+also returns W_test which corresponds to the NMF transformation applied to the testset
+'''
 def NMF_train(X_train, X_test, n):
     nmf_model = NMF(n_components=n)
     nmf_model.fit(X_train)
@@ -83,7 +90,7 @@ def NMF_train(X_train, X_test, n):
     
     return H, W, W_test
 
-# plot return the normalized matrix norm for (X_train - W*H)
+''' plot return the normalized matrix norm for (X_train - W*H)'''
 def Kplot(k, n, step):
     mat_norm_train = []
     mat_norm_test = []
@@ -96,11 +103,13 @@ def Kplot(k, n, step):
         mat_norm_test.append(np.linalg.norm(M_test)/np.sqrt(M_test.shape[0]*M_test.shape[1]))
     return mat_norm_train, mat_norm_test
 
+''' prints n_top_words corresponds to the topics in W or H'''
 def describe_nmf_results(W, H, n_top_words = 15):
     for topic_num, topic in enumerate(H):
         print("Topic %d:" % topic_num)
         print(" ".join([feature_words[i] for i in topic.argsort()[:-n_top_words - 1:-1]]))
 
+''' Applies randomforest to the dataset and returns the MSE for the test and training data'''
 def randforest(W, W_test, y_train, depth, n_estm, sample_size):
     
     clf_1 = RandomForestRegressor(n_estimators = n_estm, max_depth=depth, min_samples_split = sample_size)
@@ -114,7 +123,10 @@ def randforest(W, W_test, y_train, depth, n_estm, sample_size):
     mse_train = mean_squared_error(y_train, y_train_pred)
     
     return mse_test , mse_train
-def split_vectorize_featSelection(df, grams):
+
+''' splits the data into test and train, vectorizes the text to tfidf BOW and
+ uses chi2 to select features using quantile bins of the salary (slabel) '''
+def split_vectorize_featSelection(df, grams, n_feat = 1000):
     
     df.index = df.title.values
     df = df.drop('title', 1)
@@ -136,7 +148,7 @@ def split_vectorize_featSelection(df, grams):
     
     feature_words = vect_model.get_feature_names()
     
-    ch2 = SelectKBest(chi2, k=1000)
+    ch2 = SelectKBest(chi2, k= n_feat)
     X_train_new_a = ch2.fit_transform(X_train, docs_train[1])
     X_test_new_a = ch2.transform(X_test)
     
