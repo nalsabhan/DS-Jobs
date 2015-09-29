@@ -7,6 +7,7 @@ from sklearn.decomposition import NMF
 import pandas as pd 
 from sklearn.feature_selection import SelectKBest, chi2
 
+''' Returns the collection pointer of the given mongo DB and collection names'''
 def init_db(db_name, db_col):
     
     client = pymongo.MongoClient()
@@ -17,23 +18,23 @@ def init_db(db_name, db_col):
 
     return coll
 
-# extract the city name from the salary brief description
+'''extract the city name from the salary brief description'''
 def get_city(string_arg):
 
     city = string_arg.split('(')[0].split(',')[0]
     return city.strip()
 
-# extract the state name from the salary brief description
+'''extract the state name from the salary brief description'''
 def get_state(string_arg):
 
     state = string_arg.split('(')[0].split(',')[1]
     return state.strip()
 
-# extract the date from the salary brief description
+'''extract the date from the salary brief description'''
 def get_date(string_arg):
     return string_arg[string_arg.index("(") + 1:string_arg.rindex(")")]
 
-# to split the data such that the same job title isn't in both the training and test 
+'''to split the data such that the same job title isn't in both the training and test '''
 def fair_split(df, p):
     
     
@@ -59,7 +60,7 @@ def fair_split(df, p):
     
     return X_train, X_test, y_train, y_test
 
-# To split the data and vectorize the text in 'desc' to a tfidf BOW matrix 
+'''To split the data and vectorize the text in 'desc' to a tfidf BOW matrix''' 
 def split_and_vectorize(df, grams, max_feat):
     docs_train, docs_test, y_train, y_test = train_test_split(df['desc'], df['sal'], test_size = 0.1)
 
