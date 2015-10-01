@@ -14,3 +14,5 @@ The data has been collected from different sources and merged for matching job t
 *  Job descriptions: [indeed.com](http://www.indeed.com) and [simplyhired.com](http://www.simplyhired.com)
 
 The Dataset consist of 15724 jobs for 12 companies and 88334 salaries.
+
+![image](https://cloud.githubusercontent.com/assets/13112596/10216841/c937e094-67e0-11e5-8077-597d968062f2.png)
