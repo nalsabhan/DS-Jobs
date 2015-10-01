@@ -27,5 +27,5 @@ The following image, illustrates the top 400 words and their sizes represent the
 
 ![image](https://cloud.githubusercontent.com/assets/13112596/10217515/2b0942e6-67e5-11e5-8fb5-6d575d73ebc1.png)
 
-The X-axes represent the strength/weight of this latent feature (Customer services) per job, while y-axis is the corresponding average salary. It shows that the more the job description is relevant to customer services the lower the average salaries are
+The X-axes represent the strength/weight of this latent feature (Customer services) per job, while y-axis is the corresponding average salary. It shows that the more the job description is relevant to customer services the lower the average salaries.
 
