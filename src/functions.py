@@ -5,7 +5,16 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.decomposition import NMF
 import pandas as pd 
-from sklearn.feature_selection import SelectKBest, chi2
+from sklearn.feature_selection import SelectKBest, chi2, f_regression
+from sklearn.feature_extraction import text 
+import numpy as np 
+import pandas as pd
+from nltk import word_tokenize          
+from nltk.stem.porter import PorterStemmer
+from nltk.stem import WordNetLemmatizer
+import string
+from string import digits
+
 
 ''' Returns the collection pointer of the given mongo DB and collection names'''
 def init_db(db_name, db_col):
@@ -105,10 +114,10 @@ def Kplot(k, n, step):
     return mat_norm_train, mat_norm_test
 
 ''' prints n_top_words corresponds to the topics in W or H'''
-def describe_nmf_results(W, H, n_top_words = 15):
+def display_nmf_results(W, H, feat_words, n_top_words = 15):
     for topic_num, topic in enumerate(H):
         print("Topic %d:" % topic_num)
-        print(" ".join([feature_words[i] for i in topic.argsort()[:-n_top_words - 1:-1]]))
+        print(" ".join([feat_words[i] for i in topic.argsort()[:-n_top_words - 1:-1]]))
 
 ''' Applies randomforest to the dataset and returns the MSE for the test and training data'''
 def randforest(W, W_test, y_train, depth, n_estm, sample_size):
@@ -162,3 +171,90 @@ def split_vectorize_featSelection(df, grams, n_feat = 1000):
     
 
     return X_train_new_a, X_train_new_b, X_test_new_a, X_test_new_b, y_train, y_test, vect_model, feature_words
+
+def stem_tokens(tokens, stemmer):
+    stemmed = []
+    for item in tokens:
+        stemmed.append(stemmer.stem(item))
+    return stemmed
+
+def lemm_tokens(tokens, lemmatizer):
+    lemmatized = []
+    #additional_stop_words =set([u'--', u'san',u'francisco',u'ca',u'ibm', u'race', u'color', u'religion', u'twitter', u'microsoft', u'emc', u'ebay', u'yahoo', u'google', u'accenture', u'intel', u'amazone', u'oracle', u'gender', u'disability', u'veteran', u'status', u'age', u'status', u'genetic', u'origin', u'marital',u'ibm', u'race', u'color', u'disabilities', u'religion', u'twitter', u'microsoft', u'emc', u'ebay', u'yahoo', u'google', u'accenture', u'intel', u'amazone', u'oracle', u'MS', u'Intel', u'Hewlett', u'Packard', u'ebay', u'Twitter', u'IBM', u'yahoo', u'EMC', u'Accenture', u'Corporate', u'id', 'francisco','ca','ibm', 'race', 'color', 'religion', 'twitter', 'microsoft', 'emc', 'ebay', 'yahoo', 'google', 'accenture', 'intel', 'amazone', 'oracle', 'gender', 'disability', 'veteran', 'status', 'age', 'status', 'genetic', 'origin', 'marital','ibm', 'race', 'color', 'disabilities', 'religion', 'twitter', 'microsoft', 'emc', 'ebay', 'yahoo', 'google', 'accenture', 'intel', 'amazone', 'oracle', 'MS', 'Intel', 'Google', 'Hewlett', 'Packard', 'ebay', 'Twitter', 'IBM', 'yahoo', 'EMC', 'Accenture', 'Corporate', 'Oracle', 'id', 'travel', 'job', 'role' , 'committed', 'employment', 'jobs', 'citizenship', 'fair', 'position', 'type', 'environment', 'orientation', 'national', 'regard', 'identity', 'sexual', 'equal', 'francisco','ca','ibm', 'race', 'color', 'religion', 'twitter', 'microsoft', 'emc', 'ebay', 'yahoo', 'google', 'accenture', 'intel', 'amazone', 'oracle', 'gender', 'disability', 'veteran', 'status', 'age', 'status', 'genetic', 'origin', 'marital', 'city', 'compliance', 'country', 'diverse','genetics','immigration','opportunity','proud','regarding','usa','work', 'required', 'bonus','core','corporate','diversity','encouraged','involvement','join','regardless','rewarding','salary','workplace'])  
+
+    for item in tokens:        
+        lemmatized.append(lemmatizer.lemmatize(item))
+    return lemmatized
+
+def tokenize_lemm(text):
+    lemmatizer = WordNetLemmatizer()
+    digits_tbl = {ord(d): u' ' for d in digits}
+    punc_tbl = {ord(p): u' ' for p in string.punctuation}
+
+    text = text.translate(digits_tbl)
+    text = text.translate(punc_tbl)
+    #text = "".join([ch for ch in text if ch not in string.punctuation])
+    tokens = word_tokenize(text)
+    lemmas = lemm_tokens(tokens, lemmatizer)
+    return lemmas
+
+def tokenize_stem(text):
+    stemmer = PorterStemmer()
+    digits_tbl = {ord(d): u' ' for d in digits}
+    punc_tbl = {ord(p): u' ' for p in string.punctuation}
+    text = text.translate(digits_tbl)
+    text = text.translate(punc_tbl)
+
+    #additional_stop_words =set([u'--', u'san',u'francisco',u'ca',u'ibm', u'race', u'color', u'religion', u'twitter', u'microsoft', u'emc', u'ebay', u'yahoo', u'google', u'accenture', u'intel', u'amazone', u'oracle', u'gender', u'disability', u'veteran', u'status', u'age', u'status', u'genetic', u'origin', u'marital',u'ibm', u'race', u'color', u'disabilities', u'religion', u'twitter', u'microsoft', u'emc', u'ebay', u'yahoo', u'google', u'accenture', u'intel', u'amazone', u'oracle', u'MS', u'Intel', u'Hewlett', u'Packard', u'ebay', u'Twitter', u'IBM', u'yahoo', u'EMC', u'Accenture', u'Corporate', u'id', 'francisco','ca','ibm', 'race', 'color', 'religion', 'twitter', 'microsoft', 'emc', 'ebay', 'yahoo', 'google', 'accenture', 'intel', 'amazone', 'oracle', 'gender', 'disability', 'veteran', 'status', 'age', 'status', 'genetic', 'origin', 'marital','ibm', 'race', 'color', 'disabilities', 'religion', 'twitter', 'microsoft', 'emc', 'ebay', 'yahoo', 'google', 'accenture', 'intel', 'amazone', 'oracle', 'MS', 'Intel', 'Google', 'Hewlett', 'Packard', 'ebay', 'Twitter', 'IBM', 'yahoo', 'EMC', 'Accenture', 'Corporate', 'Oracle', 'id', 'travel', 'job', 'role' , 'committed', 'employment', 'jobs', 'citizenship', 'fair', 'position', 'type', 'environment', 'orientation', 'national', 'regard', 'identity', 'sexual', 'equal', 'francisco','ca','ibm', 'race', 'color', 'religion', 'twitter', 'microsoft', 'emc', 'ebay', 'yahoo', 'google', 'accenture', 'intel', 'amazone', 'oracle', 'gender', 'disability', 'veteran', 'status', 'age', 'status', 'genetic', 'origin', 'marital', 'city', 'compliance', 'country', 'diverse','genetics','immigration','opportunity','proud','regarding','usa','work', 'required', 'bonus','core','corporate','diversity','encouraged','involvement','join','regardless','rewarding','salary','workplace'])  
+    #text = "".join([ch for ch in text if ch not in string.punctuation and ch not in additional_stop_words])
+    tokens = word_tokenize(text)
+    stems = stem_tokens(tokens, stemmer)
+    return stems
+
+def split_vect_sel_companies(df, grams, max_feat, x_col, y_col, with_stemming, with_lemmatizer, select_k, use_selection):
+
+
+    docs_train, docs_test, y_train, y_test = train_test_split(df[x_col], df[y_col], test_size = 0.1)
+    
+    my_additional_stop_words = set([u'san',u'francisco',u'ca',u'ibm', u'race', u'color', u'religion', u'twitter', u'microsoft', u'emc', u'ebay', u'yahoo', u'google', u'accenture', u'intel', u'amazone', u'oracle', u'gender', u'disability', u'veteran', u'status', u'age', u'status', u'genetic', u'origin', u'marital',u'ibm', u'race', u'color', u'disabilities', u'religion', u'twitter', u'microsoft', u'emc', u'ebay', u'yahoo', u'google', u'accenture', u'intel', u'amazone', u'oracle', u'MS', u'Intel', u'Hewlett', u'Packard', u'ebay', u'Twitter', u'IBM', u'yahoo', u'EMC', u'Accenture', u'Corporate', u'id', 'francisco','ca','ibm', 'race', 'color', 'religion', 'twitter', 'microsoft', 'emc', 'ebay', 'yahoo', 'google', 'accenture', 'intel', 'amazone', 'oracle', 'gender', 'disability', 'veteran', 'status', 'age', 'status', 'genetic', 'origin', 'marital','ibm', 'race', 'color', 'disabilities', 'religion', 'twitter', 'microsoft', 'emc', 'ebay', 'yahoo', 'google', 'accenture', 'intel', 'amazone', 'oracle', 'MS', 'Intel', 'Google', 'Hewlett', 'Packard', 'ebay', 'Twitter', 'IBM', 'yahoo', 'EMC', 'Accenture', 'Corporate', 'Oracle', 'id', 'travel', 'job', 'role' , 'committed', 'employment', 'jobs', 'citizenship', 'fair', 'position', 'type', 'environment', 'orientation', 'national', 'regard', 'identity', 'sexual', 'equal', 'francisco','ca','ibm', 'race', 'color', 'religion', 'twitter', 'microsoft', 'emc', 'ebay', 'yahoo', 'google', 'accenture', 'intel', 'amazone', 'oracle', 'gender', 'disability', 'veteran', 'status', 'age', 'status', 'genetic', 'origin', 'marital', 'city', 'compliance', 'country', 'diverse','genetics','immigration','opportunity','proud','regarding','usa','work', 'required', 'bonus','core','corporate','diversity','encouraged','involvement','join','regardless','rewarding','salary','workplace','francisco','ca','ibm', 'race', 'color', 'religion', 'twitter', 'microsoft', 'emc', 'ebay', 'yahoo', 'google', 'accenture', 'intel', 'amazone', 'oracle', 'gender', 'disability', 'veteran', 'status', 'age', 'status', 'genetic', 'origin', 'marital','ibm', 'race', 'color', 'disabilities', 'religion', 'twitter', 'microsoft', 'emc', 'ebay', 'yahoo', 'google', 'accenture', 'intel', 'amazone', 'oracle', 'MS', 'Intel', 'Google', 'Hewlett', 'Packard', 'ebay', 'Twitter', 'IBM', 'yahoo', 'EMC', 'Accenture', 'Corporate', 'Oracle', 'id', 'travel', 'job', 'role' , 'committed', 'employment', 'jobs', 'citizenship', 'fair', 'position', 'type', 'environment', 'orientation', 'national', 'regard', 'identity', 'sexual', 'equal', 'francisco','ca','ibm', 'race', 'color', 'religion', 'twitter', 'microsoft', 'emc', 'ebay', 'yahoo', 'google', 'accenture', 'intel', 'amazone', 'oracle', 'gender', 'disability', 'veteran', 'status', 'age', 'status', 'genetic', 'origin', 'marital', 'city', 'compliance', 'country', 'diverse','genetics','immigration','opportunity','proud','regarding','usa','work', 'required', 'bonus','core','corporate','diversity','encouraged','involvement','join','regardless','rewarding','salary','workplace'])
+    
+    stop_words = text.ENGLISH_STOP_WORDS.union(my_additional_stop_words)
+
+    
+    #docs_train, docs_test, y_train, y_test = fair_split(df, 0.2)
+    
+    if len(y_col) > 1:
+        sal_train = y_train[:,0]
+        sal_test = y_test[:,0]
+    else:
+        sal_train = y_train
+        sal_test = y_test
+
+    if with_stemming:
+        my_tokenize=tokenize_stem
+    elif with_lemmatizer:
+        my_tokenize=tokenize_lemm
+    else:
+        my_tokenize=None
+
+    
+    vect_model = TfidfVectorizer(tokenizer=my_tokenize, stop_words=stop_words, strip_accents = 'unicode',max_features=max_feat,  ngram_range = grams)
+    
+    X_train = vect_model.fit_transform(docs_train)
+    X_test = vect_model.transform(docs_test)
+    
+    feature_words = vect_model.get_feature_names()
+
+    if use_selection:
+        sel_model = SelectKBest(f_regression, k=select_k)
+        X_train = sel_model.fit_transform(X_train.toarray(), sal_train)
+        X_test = sel_model.transform(X_test.toarray())
+        feature_words = np.array(feature_words)[sel_model.get_support(indices=True)]
+ 
+    return X_train, X_test, y_train, y_test, vect_model, feature_words
+
+def nmf_desciption(W, H, feature_words, n_top_words = 10):
+    lst = []
+    for topic_num, topic in enumerate(H):
+        lst.append(" ".join([feature_words[i] for i in topic.argsort()[:-n_top_words - 1:-1]]))
+    return pd.DataFrame(lst)

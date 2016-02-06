@@ -138,11 +138,8 @@ def search_data_indeed(title, company, sal, other,  coll, cm):
     title = title.replace('Engineer', 'Eng').replace('Eng', 'Engineer').strip()
     title = title.replace('Development', 'Dev').strip()
 
-    
     titl = title
     split_title = titl.split()
-    
-    
     titl = title.strip().replace(' ', '+')
 
 
@@ -188,27 +185,21 @@ def search_data_indeed(title, company, sal, other,  coll, cm):
         	for link in links:
         		get_data_indeed('http://www.indeed.com' + link, company, title, sal, other, coll)
 
-def get_data_simplyHired(path, company, title, sal, other, coll):
 
-    
+def get_data_simplyHired(path, company, title, sal, other, coll):
     
     r = requests.get(path, headers={'User-agent': 'Mozilla/5.0'})
     html = r.content
     soup = BeautifulSoup(r.content, from_encoding='UTF-8')
     job_desc = soup.findAll('div', 'description-full')
-#   comp, locat, date, src = None, None, None, None
     
     sleep_list = np.linspace(.1, 1.2, num=7)
     sleep(round(random.choice(sleep_list),4))
     
     if not job_desc:
-        
         return 
-    else:
-        
-
+    else:        
         job_desc = job_desc[0].text
-    
         db_insert(company, title, job_desc, sal, other, path, html, coll)
 
 # get data from indeed.com and if no data found return 
@@ -245,9 +236,8 @@ def db_insert(comp, title, job_desc, sal, other, path, html, coll):
     coll.insert({'company':comp, 'title':title, 'desc':job_desc, 'sal':sal, 'other':other,  'url':path, 'html':html})
 
 
-#['Twitter', 'IBM', 'yahoo', 
-#['Intel', 'Google', 'Hewlett Packard', 'ebay', 'TERADATA OPERATIONS']  
-list_cmp = ['Intel', 'Google', 'Hewlett Packard', 'ebay', 'TERADATA OPERATIONS'] #['Twitter', 'IBM'] #[ 'EMC', 'Accenture', 'Amazon Corporate', 'Oracle']
+
+list_cmp = ['Intel', 'Google', 'Hewlett Packard', 'ebay', 'TERADATA OPERATIONS', 'Twitter', 'IBM', 'yahoo', 'EMC', 'Accenture', 'Amazon Corporate', 'Oracle']
 for cm in list_cmp:
     print 'starting '+ cm
     col_MS = init_db('jobs', cm+'q3_salaries')
